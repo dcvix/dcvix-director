@@ -66,5 +66,5 @@ rm -rf $RPM_BUILD_ROOT
 %systemd_postun_with_restart %{name}.service
 
 %changelog
-* Wed Jul 01 2026 Diego Cortassa <diego@cortassa.net> - %{version}-%{release}
+* Fri Jul 02 2026 Diego Cortassa <diego@cortassa.net> - %{version}-%{release}
 - Initial RPM release

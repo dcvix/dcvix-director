@@ -1,0 +1,16 @@
+Package: @PACKAGE@
+Version: @VERSION@
+Architecture: amd64
+Maintainer: Diego Cortassa <diego@cortassa.net>
+Depends: systemd
+Section: admin
+Priority: optional
+Homepage: https://github.com/dcvix/dcvix-director/
+Description: dcvix is a session broker and server-pool manager
+ for Amazon DCV. It provides centralized authentication,
+ desktop session lifecycle management,
+ and automatic allocation of DCV servers.
+ This package provides the director, the central management service.
+ It runs on a server and provides the REST API,
+ admin web UI, CA authority, and user authentication
+ for the dcvix session broker.

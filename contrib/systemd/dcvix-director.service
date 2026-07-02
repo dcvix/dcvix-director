@@ -1,0 +1,13 @@
+[Unit]
+Description=dcvix director (director for the dcvix DCV orchestration system)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/dcvix-director/
+ExecStart=/usr/bin/dcvix-director --conf /etc/dcvix-director/dcvix-director.conf
+Restart=always
+RestartSec=30s
+
+[Install]
+WantedBy=multi-user.target

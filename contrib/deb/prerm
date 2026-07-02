@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+systemctl stop dcvix-director.service || true
+systemctl disable dcvix-director.service || true 

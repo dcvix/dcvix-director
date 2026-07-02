@@ -1,0 +1,77 @@
+[director]
+# The hostname or ip the director will listen on (0.0.0.0 for all interfaces). Default: 0.0.0.0
+director_host = "0.0.0.0"
+# The port the director will listen on. Default: 8445
+director_port = 8445
+# The port agents listen on. Default: 8446
+agent_port = 8446
+# Auth type. Default: pam
+# Valid values: pam, ldap, radius, external
+auth_type = "pam"
+# Symmetric key for PASETO token encryption/decryption (base64 encoded).
+# If empty, a new key will be generated on startup.
+# IMPORTANT: Copy the generated key from logs and set it here for persistence.
+#            Without this, all sessions become invalid on service restart.
+# token_key = ""
+# Folder path where the policy database is stored. Default: policydb
+policydb_folder = "policydb"
+# Directory for persistent runtime data (agents.db, CA keys, server cert). Default: /var/lib/dcvix-director
+data_dir = "/var/lib/dcvix-director"
+
+[pam_auth]
+# PAM service name to use for authentication. Default: login
+pam_service_name = "login"
+
+[ldap_auth]
+ldap_address = "ldap://127.0.0.1:389"
+ldap_base_dn = "dc=example,dc=com"
+ldap_bind_user = "cn=admin,dc=example,dc=com"
+ldap_bind_password = "password"
+# Filter to use when searching for the user, %s will be replaced with the userID. Default: "(sAMAccountName=%s)"
+ldap_filter = "(sAMAccountName=%s)"
+# OTP type. Default: disabled
+# Valid values: disabled, privacyidea, external
+otp_type = "disabled"
+# URL to use for privacyIDEA OTP verification, will call POST /validate/check route.
+privacyidea_url = "https://mfaserver.domain.com"
+# Verify TLS certificates when connecting to privacyIDEA. Default: true
+# Set to false only if using self-signed certificates in development.
+privacyidea_tls_strict = true
+# Command to execute for external OTP verification.
+# Must accept UserID'\n'Password'\n'OTP'\n' as stdin and return 0 if OTP is valid, 1 otherwise.
+otp_external_command = "/usr/bin/external-auth"
+otp_external_args = ""
+
+[radius_auth]
+radius_server = "127.0.0.1"
+radius_port = 1812
+radius_secret = "secret"
+
+[external_auth]
+# Command to execute for external authentication.
+# Must accept UserID'\n'Password'\n'OTP'\n' as stdin and return 0 if authentication is successful, 1 otherwise.
+external_command = "/usr/bin/external-auth"
+args = ""
+
+[gateway]
+# List of gateway IPs allowed to access the /resolveSession endpoint.
+# Comma-separated list of allowed IP addresses.
+# IMPORTANT: If empty or unset, the endpoint will deny ALL connections.
+# Example: gateways_list = "127.0.0.1, 192.168.1.100, ::1"
+gateways_list = "127.0.0.1"
+
+[housekeeper]
+# Frequency of housekeeper runs. Default: 40s
+housekeeper_frequency = "40s"
+# Max age of a session before it is deleted. Default: 30s
+max_age = "30s"
+
+[log]
+# log verbosity. Default: info
+# Valid values: debug, info, warning, error, critical
+level = info
+# on linux example: /var/log/dcvix-director/
+# on windows example: C:\ProgramData\dcvix-director\logs 
+directory = log
+# Keep N log files each 100Mb. Default: 2
+rotation = 2

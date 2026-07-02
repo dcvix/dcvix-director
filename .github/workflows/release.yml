@@ -1,0 +1,157 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Install deb build dependencies
+        run: >-
+          sudo apt-get update &&
+          sudo apt-get -y install
+          ca-certificates
+          make
+          curl
+          git
+          gcc
+          libpam-dev
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+ 
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Downloads go modules dependencies
+        run: go mod tidy
+
+      - name: Build Linux binary
+        run: make build
+
+      - name: Build DEB package
+        run: make deb
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-linux-ubuntu
+          path: |
+            dist/dcvix-director-v${{ env.VERSION }}*.tar.gz
+            dist/dcvix-director-${{ env.VERSION }}.deb
+
+  build-rpm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    container:
+      image: rockylinux/rockylinux:9
+
+    defaults:
+      run:
+        shell: /bin/bash -e {0}
+
+    env:
+      GO_VERSION: '1.26'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Install RPM build dependencies
+        run: |
+          dnf install -y bash rpm-build systemd systemd-rpm-macros rpmdevtools make gcc which git golang pam-devel
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build RPM package
+        run: |
+          export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+          make rpm
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-linux-rocky
+          path: |
+            dist/dcvix-director-${{ env.VERSION }}-*.el9.x86_64.rpm
+
+  release:
+    needs: [build-ubuntu, build-rpm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets-linux-ubuntu
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets-linux-rocky
+
+      - name: Generate checksums
+        run: |
+          sha256sum *.tar.gz *.rpm *.deb > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.tar.gz
+            *.rpm
+            *.deb
+            checksums.txt
+          name: dcvix-director ${{ env.VERSION }}
+          body: |
+            ## dcvix-director ${{ env.VERSION }}
+            
+            ### Packages
+            - Linux binary (tar.gz)
+            - Debian package (deb)
+            - RPM package (rpm)
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
